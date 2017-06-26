@@ -15,9 +15,9 @@ var inputSelIdx = null;
 window.addEventListener('load', init, false);
 
 var midishortcut = {
-	pause: [0x90, 0x26, function(v){ return v>0; }],
-	rewind: [0x90, 0x24, function(v){ return v>0; }],
-	forward: [0x90, 0x28, function(v){ return v>0; }]
+	pause: [0x90, 0x1a, function(v){ return v>0; }],
+	rewind: [0x90, 0x18, function(v){ return v>0; }],
+	forward: [0x90, 0x1c, function(v){ return v>0; }]
 }
 
 var rewindv = 3;
