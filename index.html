@@ -1,6 +1,13 @@
 <html>
 <head>
 <script type="text/javascript" src="p4c.js"></script>
+<style>
+input {
+	border:solid 1px;
+	border-radius: 2px;
+	border-color: gray;
+}
+</style>
 </head>
 <body>
 <p>
@@ -16,8 +23,8 @@ Select MIDI Input(Optional) :
 <table border="1" cellspacing="0" cellpadding="4">
 <tr><th>Command</th><th>Key</th><th>MIDI msg.</th></tr>
 <tr><td>Pause/Play</td><td>Down</td><td>Note ON D0</td></tr>
-<tr><td>Rewind 3[sec]</td><td>Left</td><td>Note ON C0</td></tr>
-<tr><td>Forward 3[sec]</td><td>Right</td><td>Note ON E0</td></tr>
+<tr><td>Rewind <input id="rewindv" value="3" style="width:40px" onchange="rewindvchange()"/>[sec]</td><td>Left</td><td>Note ON C0</td></tr>
+<tr><td>Forward <input id="forwardv" value="3" style="width:40px"  onchange="forwardvchange()"/>[sec]</td><td>Right</td><td>Note ON E0</td></tr>
 </table>
 </div>
 <div style="font-size:50px;">

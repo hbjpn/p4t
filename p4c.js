@@ -20,6 +20,9 @@ var midishortcut = {
 	forward: [0x90, 0x28, function(v){ return v>0; }]
 }
 
+var rewindv = 3;
+var forwardv = 3;
+
 function init() {
   try {
     // Fix up for prefixing
@@ -81,10 +84,10 @@ function rewind()
 	if(cursource){
 		if(curstate){
 			stopSound();
-			curbuftime = Math.max(0, curbuftime - 3);
+			curbuftime = Math.max(0, curbuftime - rewindv);
 			playSound(dogBarkingBuffer, context.currentTime + 0, curbuftime);
 		}else{
-			curbuftime = Math.max(0, curbuftime - 3);
+			curbuftime = Math.max(0, curbuftime - rewindv);
 		}
 		updateti(curbuftime);
 	}
@@ -94,10 +97,10 @@ function forward()
 {
 	if(curstate){
 		stopSound();
-		curbuftime = Math.min(curbuftime + 3, dogBarkingBuffer.duration);
+		curbuftime = Math.min(curbuftime + forwardv, dogBarkingBuffer.duration);
 		playSound(dogBarkingBuffer, context.currentTime + 0, curbuftime);
 	}else{
-		curbuftime = Math.min(curbuftime + 3, dogBarkingBuffer.duration);
+		curbuftime = Math.min(curbuftime + forwardv, dogBarkingBuffer.duration);
 	}
 	updateti(curbuftime);
 }
@@ -268,4 +271,19 @@ function OnMidiMessage(evt)
 	console.log(msgstr);
 	
 	MidiMsgMathcher(evt);
+}
+
+function rewindvchange()
+{
+	var v = document.getElementById("rewindv").value;
+	if(!isNaN(v))
+		rewindv = v * 1;
+}
+
+function forwardvchange()
+{
+	var v = document.getElementById("forwardv").value;
+	if(!isNaN(v))
+		forwardv = v * 1;
+	console.log("fw = " + forwardv);
 }
