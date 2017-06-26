@@ -3,14 +3,22 @@
 <script type="text/javascript" src="p4c.js"></script>
 </head>
 <body>
-<div>
+<p>
 Select Audio File : <input type="file" id="files" name="files[]" multiple />
-</div>
-<div>
+</p>
+<p>
 Select MIDI Input(Optional) : 
 <select id="midiin">
 <option value=0>-</option>
 </select>
+</p>
+<div>
+<table border="1" cellspacing="0" cellpadding="4">
+<tr><th>Command</th><th>Key</th><th>MIDI msg.</th></tr>
+<tr><td>Pause/Play</td><td>Down</td><td>Note ON D1</td></tr>
+<tr><td>Rewind</td><td>Left</td><td>Note ON C1</td></tr>
+<tr><td>Forward</td><td>Right</td><td>Note ON E1</td></tr>
+</table>
 </div>
 <div style="font-size:50px;">
 <span id="ti">00:00:00.0</span>
