@@ -1,6 +1,9 @@
 var context;
 
 var dogBarkingBuffer = null;
+// Create a gain node.
+var gainNode = null;
+
 // Fix up prefixing
 
 var globalintv = null;
@@ -40,6 +43,15 @@ function init() {
   globalintv = setInterval(reflesh, 100);
   
   prepareMIDI();
+
+	$('#slider-volume').slider({
+		range: "min",
+		min: 0,
+		max: 1,
+		step: 0.01,
+		value: 1,
+		slide: function(evt,ui){ if (gainNode){ gainNode.gain.value = ui.value; } }
+		});
 }
 
 function updateti(tr)
@@ -140,7 +152,12 @@ function playSound(buffer, t, st) {
 	console.log("Start playing ... ");
 	var source = context.createBufferSource(); // creates a sound source
 	source.buffer = buffer;                    // tell the source which sound to play
-	source.connect(context.destination);       // connect the source to the context's destination (the speakers)
+	var curgain = gainNode ? gainNode.gain.value : 1;
+	gainNode = null;
+	gainNode = context.createGain();
+	source.connect(gainNode);
+	gainNode.gain.value = curgain;
+	gainNode.connect(context.destination);
 	source.onended = function() {
 		console.log("On ended called");
 	};

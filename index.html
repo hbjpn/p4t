@@ -1,11 +1,37 @@
 <html>
 <head>
 <script type="text/javascript" src="p4c.js"></script>
-<style>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<link type="text/css" rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.min.css" />
+<script type="text/javascript" src="http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>
+ 
+<script type="text/javascript">
+	$(function() {
+		$('#slider-volume').slider({
+		range: "min",
+		min: 0,
+		max: 1});
+		$('#slider-time').slider();
+	});
+</script>
+
+<style type="text/css">
 input {
 	border:solid 1px;
 	border-radius: 2px;
 	border-color: gray;
+}
+
+/* css つまみサイズ調整 */
+#slider-volume .ui-slider-handle {
+	width:14px;
+	height:14px;
+	margin-top:2px;
+}
+#slider-time .ui-slider-handle {
+	width:14px;
+	height:14px;
+	margin-top:2px;
 }
 </style>
 </head>
@@ -27,8 +53,18 @@ Select MIDI Input(Optional) :
 <tr><td>Forward <input id="forwardv" value="3" style="width:40px"  onchange="forwardvchange()"/>[sec]</td><td>Right</td><td>Note ON E0</td></tr>
 </table>
 </div>
+<div>
+<table>
+<tr><td>Vol : </td><td><div id="slider-volume" style="width:100px;height:10px; "></div></td></tr>
+</table>
+</div>
 <div style="font-size:50px;">
 <span id="ti">00:00:00.0</span>
 </div>
+<!--
+<table>
+<tr><td></td><td><div id="slider-time" style="width:200px;height:10px; "></div></td></tr>
+</table>
+-->
 </body>
 </html>
