@@ -1,8 +1,11 @@
 var context;
 
-var dogBarkingBuffer = null;
+var originalBuffer = null;
+var playBuffer = null;
+
 // Create a gain node.
 var gainNode = null;
+var scriptNode = null;
 
 // Fix up prefixing
 
@@ -16,7 +19,6 @@ var curbuftime = 0;
 var inputSelIdx = null;
 
 window.addEventListener('load', init, false);
-
 var midishortcut = {
 	pause: [0x90, 0x1a, function(v){ return v>0; }],
 	rewind: [0x90, 0x18, function(v){ return v>0; }],
@@ -72,8 +74,8 @@ function reflesh()
 	var ti = document.getElementById("ti");
 	if(context !== null && prevstarttime !==null & curstate == true){
 		curbuftime = context.currentTime - prevstarttime + prevstartbuftime;
-		if(curbuftime >= dogBarkingBuffer.duration){
-			curbuftime = dogBarkingBuffer.duration;
+		if(curbuftime >= playBuffer.duration){
+			curbuftime = playBuffer.duration;
 			stopSound();
 		}
 		updateti(curbuftime);
@@ -86,7 +88,7 @@ function pause()
 		if(curstate){
 			stopSound();
 		}else{
-			playSound(dogBarkingBuffer, context.currentTime + 0, curbuftime);
+			playSound(playBuffer, context.currentTime + 0, curbuftime);
 		}
 	}
 }
@@ -97,7 +99,7 @@ function rewind()
 		if(curstate){
 			stopSound();
 			curbuftime = Math.max(0, curbuftime - rewindv);
-			playSound(dogBarkingBuffer, context.currentTime + 0, curbuftime);
+			playSound(playBuffer, context.currentTime + 0, curbuftime);
 		}else{
 			curbuftime = Math.max(0, curbuftime - rewindv);
 		}
@@ -109,10 +111,10 @@ function forward()
 {
 	if(curstate){
 		stopSound();
-		curbuftime = Math.min(curbuftime + forwardv, dogBarkingBuffer.duration);
-		playSound(dogBarkingBuffer, context.currentTime + 0, curbuftime);
+		curbuftime = Math.min(curbuftime + forwardv, playBuffer.duration);
+		playSound(playBuffer, context.currentTime + 0, curbuftime);
 	}else{
-		curbuftime = Math.min(curbuftime + forwardv, dogBarkingBuffer.duration);
+		curbuftime = Math.min(curbuftime + forwardv, playBuffer.duration);
 	}
 	updateti(curbuftime);
 }
@@ -137,7 +139,7 @@ function loadDogSound(url) {
   // Decode asynchronously
   request.onload = function() {
     context.decodeAudioData(request.response, function(buffer) {
-      dogBarkingBuffer = buffer;
+      originalBuffer = buffer;
     }, onError);
   }
   request.send();
@@ -145,16 +147,111 @@ function loadDogSound(url) {
 function stopSound(){
 	cursource.stop();
 	curstate = false;
-	curbuftime = Math.min(context.currentTime - prevstarttime + prevstartbuftime, dogBarkingBuffer.duration);
+	curbuftime = Math.min(context.currentTime - prevstarttime + prevstartbuftime, playBuffer.duration);
+	if(gainNode)
+		gainNode.disconnect();
+	if(scriptNode)
+		scriptNode.disconnect();
+}
+
+
+function copyto(dst, src, dst_start, src_start, len)
+{
+	//console.log("Copy dst=" + dst_start + ", src=" + src_start + "/" + len);
+	var v_dst = dst.subarray(dst_start);
+	var v_src = src.subarray(src_start, src_start+len);
+	v_dst.set(v_src, 0);
+}
+
+function addto(dst, src, dst_start, src_start, len, wnd_head, wnd_tail)
+{
+	//console.log("Copy dst=" + dst_start + ", src=" + src_start + "/" + len);
+	var v_dst = dst.subarray(dst_start);
+	var v_src = src.slice(src_start, src_start+len);
+	windowing(v_src, wnd_head, wnd_tail);
+	for(var i = 0; i < len; ++i){
+		//v_dst.set(v_src, 0);
+		v_dst[i] += v_src[i];
+	}
+}
+
+function windowing(f32array, head, tail)
+{
+	if(head > 0){
+		for(var i = 0; i < head; ++i){
+			f32array[i] *= Math.sin(Math.PI/2/head*i);
+		}
+	}
+	if(tail > 0){
+		for(var i = f32array.length - tail; i < f32array.length; ++i){
+			var j = i - f32array.length + tail;
+			f32array[i] *= Math.cos(Math.PI/2/tail*(j+1));
+		}
+	}
+}
+
+function time_pitch_streach(buffer, time_streah_rate)
+{
+	// Support only slow down 
+	if(time_streah_rate >= 1.0)
+		return buffer;
+	
+	console.log("Time pitch strech start ... ");
+	// The input buffer is the song we loaded earlier
+	var buflen = buffer.length;
+	// The output buffer contains the samples that will be modified and played
+	//var outputBuffer = audioProcessingEvent.outputBuffer;
+	
+	var blocksize = 4410;
+	var window_size = 100;
+	var bs_size = Math.floor( (blocksize - window_size) * time_streah_rate, 1 );
+	
+	var num_copy = Math.ceil((buflen - blocksize) / bs_size, 1);
+	var new_buf_size = (num_copy-1) * (blocksize - window_size) + (buflen - (num_copy-1) * bs_size - window_size);
+	console.log("Org buf size = " + buflen + ", New buf size = " + new_buf_size + ", num_copy = " + num_copy);
+	console.log("bs_size = " + bs_size);
+	var retbuf = context.createBuffer(buffer.numberOfChannels, new_buf_size, context.sampleRate);
+	
+	// Loop through the output channels (in this case there is only one)
+	for (var channel = 0; channel < buffer.numberOfChannels; channel++) {
+		var inputData = buffer.getChannelData(channel); // Float 32 Array
+		var fb = retbuf.getChannelData(channel);
+		// Time stretch
+		for(var block_idx = 0; block_idx < num_copy; ++block_idx){
+			var remain = buflen - bs_size * block_idx;
+			copysize = Math.min( blocksize, remain );
+			//copyto(fb, inputData, (blocksize - window_size) * block_idx, bs_size * block_idx, copysize);
+			addto(fb, inputData, (blocksize - window_size) * block_idx, bs_size * block_idx, copysize, window_size, window_size);
+		}
+	}
+	
+	return retbuf;
 }
 
 function playSound(buffer, t, st) {
 	console.log("Start playing ... ");
 	var source = context.createBufferSource(); // creates a sound source
 	source.buffer = buffer;                    // tell the source which sound to play
+	source.detune.value = 0;
+	source.playbackRate.value = 1;
+	
+	if(!scriptNode){
+		scriptNode = context.createScriptProcessor(4096, 1, 1);
+		scriptNode.onaudioprocess = onAudioProcess;
+	}else{
+		scriptNode.disconnect();
+	}
+	
 	var curgain = gainNode ? gainNode.gain.value : 1;
-	gainNode = null;
-	gainNode = context.createGain();
+	
+	//source.connect(scriptNode);
+	
+	if(!gainNode){
+		gainNode = context.createGain();
+	}else{
+		gainNode.disconnect();
+	}
+	//scriptNode.connect(gainNode);
 	source.connect(gainNode);
 	gainNode.gain.value = curgain;
 	gainNode.connect(context.destination);
@@ -169,6 +266,31 @@ function playSound(buffer, t, st) {
 	curstate = true;
 	
 	cursource = source;
+}
+
+
+function onAudioProcess(audioProcessingEvent){
+  // The input buffer is the song we loaded earlier
+  var inputBuffer = audioProcessingEvent.inputBuffer;
+  var buflen = inputBuffer.length;
+  
+  // The output buffer contains the samples that will be modified and played
+  var outputBuffer = audioProcessingEvent.outputBuffer;
+
+  // Loop through the output channels (in this case there is only one)
+  for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
+    var inputData = inputBuffer.getChannelData(channel); // Float 32 Array
+    var outputData = outputBuffer.getChannelData(channel);
+    
+    // Loop through the 4096 samples
+    for (var sample = 0; sample < inputBuffer.length; sample++) {
+      // make output equal to the same as the input
+      outputData[sample] = inputData[sample];
+
+      // add noise to each output sample
+      outputData[sample] += ((Math.random() * 2) - 1) * 0.01;         
+    }
+  }
 }
 
 function onError(evt)
@@ -188,8 +310,9 @@ function handleFileSelect(evt) {
 	  reader.onload = (function(theFile) {
 		return function(e) {
 			context.decodeAudioData(reader.result, function(buffer) {
-				dogBarkingBuffer = buffer;
-				playSound(dogBarkingBuffer, context.currentTime + 0, 0);
+				originalBuffer = buffer;
+				playBuffer = originalBuffer; 
+				playSound(playBuffer, context.currentTime + 0, 0);
 			}, onError);
 		};
 	  })(f);
@@ -303,4 +426,13 @@ function forwardvchange()
 	if(!isNaN(v))
 		forwardv = v * 1;
 	console.log("fw = " + forwardv);
+}
+
+function speedchange(obj)
+{
+	stopSound();
+    var idx = obj.selectedIndex;
+    var value = obj.options[idx].value; // 値
+	playBuffer = time_pitch_streach(originalBuffer, value);
+	playSound(playBuffer, context.currentTime + 0, 0);
 }
