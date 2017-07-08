@@ -17,6 +17,7 @@ var prevstarttime = null;
 var prevstartbuftime = null;
 var curbuftime = 0;
 var inputSelIdx = null;
+var exactSpeed = 1.0;
 
 window.addEventListener('load', init, false);
 var midishortcut = {
@@ -145,9 +146,11 @@ function loadDogSound(url) {
   request.send();
 }
 function stopSound(){
-	cursource.stop();
+	if (cursource)
+		cursource.stop();
 	curstate = false;
-	curbuftime = Math.min(context.currentTime - prevstarttime + prevstartbuftime, playBuffer.duration);
+	if (context && playBuffer)
+		curbuftime = Math.min(context.currentTime - prevstarttime + prevstartbuftime, playBuffer.duration);
 	if(gainNode)
 		gainNode.disconnect();
 	if(scriptNode)
@@ -193,8 +196,10 @@ function windowing(f32array, head, tail)
 function time_pitch_streach(buffer, time_streah_rate)
 {
 	// Support only slow down 
-	if(time_streah_rate >= 1.0)
+	if(time_streah_rate >= 1.0){
+		exactSpeed = time_streah_rate;
 		return buffer;
+	}
 	
 	console.log("Time pitch strech start ... ");
 	// The input buffer is the song we loaded earlier
@@ -205,6 +210,7 @@ function time_pitch_streach(buffer, time_streah_rate)
 	var blocksize = 4410;
 	var window_size = 100;
 	var bs_size = Math.floor( (blocksize - window_size) * time_streah_rate, 1 );
+	exactSpeed = bs_size / ( blocksize - window_size );
 	
 	var num_copy = Math.ceil((buflen - blocksize) / bs_size, 1);
 	var new_buf_size = (num_copy-1) * (blocksize - window_size) + (buflen - (num_copy-1) * bs_size - window_size);
@@ -311,7 +317,8 @@ function handleFileSelect(evt) {
 		return function(e) {
 			context.decodeAudioData(reader.result, function(buffer) {
 				originalBuffer = buffer;
-				playBuffer = originalBuffer; 
+				var value = $("#speedselect").val(); // 値
+				playBuffer = time_pitch_streach(originalBuffer, value);
 				playSound(playBuffer, context.currentTime + 0, 0);
 			}, onError);
 		};
@@ -430,9 +437,17 @@ function forwardvchange()
 
 function speedchange(obj)
 {
+	if(!originalBuffer)
+		return;
+	
 	stopSound();
-    var idx = obj.selectedIndex;
-    var value = obj.options[idx].value; // 値
+    var value = $("#speedselect").val();
+    var prevExactSpeed = exactSpeed;
 	playBuffer = time_pitch_streach(originalBuffer, value);
-	playSound(playBuffer, context.currentTime + 0, 0);
+	var nextExactSpeed = exactSpeed;
+	console.log("Prev Speed : " + prevExactSpeed + ", Next speed : " + nextExactSpeed);
+	console.log("Prev buf time : " + curbuftime);
+	curbuftime = curbuftime * prevExactSpeed / nextExactSpeed;
+	console.log("Next buf time : " + curbuftime);
+	playSound(playBuffer, context.currentTime + 0, curbuftime);
 }
