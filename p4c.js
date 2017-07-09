@@ -57,8 +57,9 @@ function init() {
 		});
 }
 
-function updateti(tr)
+function updateti(tr_real)
 {
+	tr = tr_real * exactSpeed;
 	var inttr = Math.floor(tr);
 	var subsec = tr - inttr;
 	var h = Math.floor(inttr / 3600);
