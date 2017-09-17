@@ -19,6 +19,8 @@ var curbuftime = 0;
 var inputSelIdx = null;
 var exactSpeed = 1.0;
 
+var pos_slider_dragging = false;
+
 window.addEventListener('load', init, false);
 var midishortcut = {
 	pause: [0x90, 0x1a, function(v){ return v>0; }],
@@ -55,10 +57,22 @@ function init() {
 		value: 1,
 		slide: function(evt,ui){ if (gainNode){ gainNode.gain.value = ui.value; } }
 		});
+
+	$('#slider-position').slider({
+		range: "min",
+		min: 0,
+		max: 1,
+		step: 0.001,
+		value: 0,
+		change: function(evt,ui){ /*console.log("change");*/ /*moveto(ui.value); */ },
+		start: function(evt,ui){ /*console.log("start");*/ pos_slider_dragging = true; },
+		stop: function(evt,ui){ /*console.log("stop");*/ moveto(ui.value); pos_slider_dragging = false; } // This is more suitable for manual changing of the slider
+		});
 }
 
 function updateti(tr_real)
 {
+	// tr_real is time in buffer
 	tr = tr_real * exactSpeed;
 	var inttr = Math.floor(tr);
 	var subsec = tr - inttr;
@@ -69,6 +83,9 @@ function updateti(tr_real)
 	var s = inttr;
 	var s2 = Math.floor(subsec*10);
 	ti.innerHTML = (h<10?'0'+h:h)+":"+(m<10?'0'+m:m)+":"+(s<10?'0'+s:s)+"."+s2;
+	
+	if(!pos_slider_dragging)
+		$('#slider-position').slider('value',tr_real/playBuffer.duration);
 }
 
 function reflesh()
@@ -79,6 +96,21 @@ function reflesh()
 		if(curbuftime >= playBuffer.duration){
 			curbuftime = playBuffer.duration;
 			stopSound();
+		}
+		updateti(curbuftime);
+	}
+}
+
+function moveto(pos)
+{
+	// pos is 0...1
+	if(cursource){
+		if(curstate){
+			stopSound();
+			curbuftime = playBuffer.duration * pos;
+			playSound(playBuffer, context.currentTime + 0, curbuftime);
+		}else{
+			curbuftime = playBuffer.duration * pos;
 		}
 		updateti(curbuftime);
 	}
@@ -235,6 +267,51 @@ function time_pitch_streach(buffer, time_streah_rate)
 	return retbuf;
 }
 
+function time_pitch_streach_ex(buffer, time_streah_rate)
+{
+	// Support only slow down 
+	/*if(time_streah_rate >= 1.0){
+		exactSpeed = time_streah_rate;
+		return buffer;
+	}*/
+	
+	console.log("Time pitch strech start ... ");
+	// The input buffer is the song we loaded earlier
+	var buflen = buffer.length;
+	// The output buffer contains the samples that will be modified and played
+	//var outputBuffer = audioProcessingEvent.outputBuffer;
+	
+	var blocksize = 4410;
+	var window_size = 100;
+	var bs_size = Math.floor( (blocksize - window_size) * time_streah_rate, 1 );
+	exactSpeed = bs_size / ( blocksize - window_size );
+	
+	var num_copy = Math.ceil((buflen - blocksize) / bs_size, 1);
+	var new_buf_size = (num_copy-1) * (blocksize - window_size) + (buflen - (num_copy-1) * bs_size - window_size);
+	console.log("Org buf size = " + buflen + ", New buf size = " + new_buf_size + ", num_copy = " + num_copy);
+	console.log("bs_size = " + bs_size);
+	var retbuf = context.createBuffer(buffer.numberOfChannels, new_buf_size, context.sampleRate);
+	
+	// Loop through the output channels (in this case there is only one)
+	for (var channel = 0; channel < buffer.numberOfChannels; channel++) {
+		var inputData = buffer.getChannelData(channel); // Float 32 Array
+		var fb = retbuf.getChannelData(channel);
+		zero_crosses = [];
+		prev_zero_cross = 0;
+		for(var i = 0; i < inputData.length; ++i){
+			if(i == 0 ) continue;
+			if ( (inputData[i-1] > 0 && inputData[i] <= 0) || ( inputData[i-1] < 0 && inputData[i] >= 0 ) ){
+				if(i - prev_zero_cross >= blocksize){
+					console.log("ZeroCross = " + i  + " / " + (i - prev_zero_cross));
+					prev_zero_cross = i;
+				}
+			}
+		}
+	}
+	
+	return retbuf;
+}
+
 function playSound(buffer, t, st) {
 	console.log("Start playing ... ");
 	var source = context.createBufferSource(); // creates a sound source
@@ -320,6 +397,7 @@ function handleFileSelect(evt) {
 				originalBuffer = buffer;
 				var value = $("#speedselect").val(); // 値
 				playBuffer = time_pitch_streach(originalBuffer, value);
+				// time_pitch_streach_ex(originalBuffer, value); TODO : Under deplopment
 				playSound(playBuffer, context.currentTime + 0, 0);
 			}, onError);
 		};

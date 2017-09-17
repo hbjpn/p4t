@@ -22,7 +22,7 @@ input {
 	height:14px;
 	margin-top:2px;
 }
-#slider-time .ui-slider-handle {
+#slider-position .ui-slider-handle {
 	width:14px;
 	height:14px;
 	margin-top:2px;
@@ -30,42 +30,46 @@ input {
 </style>
 </head>
 <body>
-<p>
-Select Audio File : <input type="file" id="files" name="files[]" multiple />
-</p>
-<p>
-Select MIDI Input(Optional) : 
+<div style="width:40%; margin:0 auto;">
+<table>
+<tr><td>
+Audio File : 
+</td><td>
+<input type="file" id="files" name="files[]" multiple />
+</td></tr>
+<tr><td>
+MIDI Input : 
+</td><td>
 <select id="midiin">
 <option value=0>-</option>
 </select>
-</p>
+</td></tr>
+<tr><td>
 Play speed :
+</td><td>
 <select id="speedselect" name="speed" onchange="speedchange(this)">
 <option value="1.0">100%</option>
 <option value="0.9">90%</option>
 <option value="0.8">80%</option>
 <option value="0.7">70%</option>
 </select>
+</td></tr>
+<tr><td>Vol : </td><td><div id="slider-volume" style="width:100px;height:10px; "></div></td></tr>
+</table>
+<table style="width:500px;" border="0">
+<!--<tr><td><div style="font-size:50px; text-align:center;"><span id="ti">00:00:00.0</span></div></td></tr>-->
+<tr><td style="width:80%;"><div style="padding-left:5px;"><div id="slider-position" style="width:100%;height:10px; "></div></div></td><td>&nbsp;<span id="ti">00:00:00.0</span></td></tr>
+</table>
+<br/>
+Shortcut-Keys :
 <div>
-<table border="1" cellspacing="0" cellpadding="4">
+<table border="1" cellspacing="0" cellpadding="4" style="font-size:12px; border-radius:5px; border-color:#ccc; width:100%;">
 <tr><th>Command</th><th>Key</th><th>MIDI msg.</th></tr>
 <tr><td>Pause/Play</td><td>Down</td><td>Note ON D0</td></tr>
 <tr><td>Rewind <input id="rewindv" value="3" style="width:40px" onchange="rewindvchange()"/>[sec]</td><td>Left</td><td>Note ON C0</td></tr>
 <tr><td>Forward <input id="forwardv" value="3" style="width:40px"  onchange="forwardvchange()"/>[sec]</td><td>Right</td><td>Note ON E0</td></tr>
 </table>
 </div>
-<div>
-<table>
-<tr><td>Vol : </td><td><div id="slider-volume" style="width:100px;height:10px; "></div></td></tr>
-</table>
 </div>
-<div style="font-size:50px;">
-<span id="ti">00:00:00.0</span>
-</div>
-<!--
-<table>
-<tr><td></td><td><div id="slider-time" style="width:200px;height:10px; "></div></td></tr>
-</table>
--->
 </body>
 </html>
