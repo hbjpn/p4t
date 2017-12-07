@@ -31,6 +31,26 @@ var midishortcut = {
 var rewindv = 3;
 var forwardv = 3;
 
+function midi_fromhex(key)
+{
+	var A0 = 0x3C - 12*3 - 3;
+	var offset = key - A0; // offset from A0
+	var octave = Math.floor(offset / 12.0);
+	var oto = offset % 12;
+	var ol = ["A","A#","B","C","C#","D","D#","E","F","F#","G","G#"];
+	return ol[oto]+octave;
+}
+
+function midi_tohex(onmei)
+{
+	var A0 = 0x3C - 12*3 - 3;
+	var octave = parseInt(onmei[onmei.length-1]);
+	var ols = onmei.substr(0,onmei.length-1);
+	var ol = ["A","A#","B","C","C#","D","D#","E","F","F#","G","G#"];
+	var oto = ol.indexOf(ols);
+	return A0 + 12*octave + oto;
+}
+
 function init() {
   try {
     // Fix up for prefixing
@@ -68,6 +88,13 @@ function init() {
 		start: function(evt,ui){ /*console.log("start");*/ pos_slider_dragging = true; },
 		stop: function(evt,ui){ /*console.log("stop");*/ moveto(ui.value); pos_slider_dragging = false; } // This is more suitable for manual changing of the slider
 		});
+	
+	$("#midi_pause").val(midi_fromhex(midishortcut.pause[1]));
+	$("#midi_rewind").val(midi_fromhex(midishortcut.rewind[1]));
+	$("#midi_forward").val(midi_fromhex(midishortcut.forward[1]));
+	$("#midi_pause").change(function(){ midishortcut.pause[1] = midi_tohex( $( this ).val() ); });
+	$("#midi_rewind").change(function(){ midishortcut.rewind[1] = midi_tohex( $( this ).val() ); });
+	$("#midi_forward").change(function(){ midishortcut.forward[1] = midi_tohex( $( this ).val() ); });
 }
 
 function updateti(tr_real)
