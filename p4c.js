@@ -27,6 +27,7 @@ var midishortcut = {
 	rewind: [0x90, 0x18, function(v){ return v>0; }],
 	forward: [0x90, 0x1c, function(v){ return v>0; }]
 }
+var mrec = null;
 
 var rewindv = 3;
 var forwardv = 3;
@@ -89,12 +90,25 @@ function init() {
 		stop: function(evt,ui){ /*console.log("stop");*/ moveto(ui.value); pos_slider_dragging = false; } // This is more suitable for manual changing of the slider
 		});
 	
-	$("#midi_pause").val(midi_fromhex(midishortcut.pause[1]));
-	$("#midi_rewind").val(midi_fromhex(midishortcut.rewind[1]));
-	$("#midi_forward").val(midi_fromhex(midishortcut.forward[1]));
+	setmidikey();
+	
 	$("#midi_pause").change(function(){ midishortcut.pause[1] = midi_tohex( $( this ).val() ); });
 	$("#midi_rewind").change(function(){ midishortcut.rewind[1] = midi_tohex( $( this ).val() ); });
 	$("#midi_forward").change(function(){ midishortcut.forward[1] = midi_tohex( $( this ).val() ); });
+	
+	$(".mrec").mousedown(function(e){
+		mrec = $(e.target).attr("op");
+	});
+	$(".mrec").mouseup(function(e){
+		mrec = null;
+	});
+}
+
+function setmidikey()
+{
+	$("#midi_pause").val(midi_fromhex(midishortcut.pause[1]));
+	$("#midi_rewind").val(midi_fromhex(midishortcut.rewind[1]));
+	$("#midi_forward").val(midi_fromhex(midishortcut.forward[1]));
 }
 
 function updateti(tr_real)
@@ -507,6 +521,13 @@ function MidiMsgMathcher(evt)
 		rewind();
 	else if( midishortcut.forward && MatchUint8Array(midishortcut.forward,evt.data))
 		forward();
+	
+	if(mrec){
+		if(evt.data[0]==0x90){
+			midishortcut[mrec][1] = evt.data[1];
+			setmidikey();
+		}
+	}
 }
 
 function OnMidiMessage(evt)

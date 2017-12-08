@@ -27,6 +27,27 @@ input {
 	height:14px;
 	margin-top:2px;
 }
+
+.mrec {
+	background-color: white;
+	border: 1px solid red;
+	border-width: 1px;
+	padding: 2px 5px;
+	margin: 5px;
+	border-radius: 20px;
+	color: red;
+	font-size: 8px;
+	cursor: pointer;
+}
+.mrec:active {
+	background-color: red;
+	padding: 2px 5px;
+	margin: 5px;
+	border-radius: 20px;
+	color: white;
+	font-size: 8px;
+	cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -65,9 +86,9 @@ Shortcut-Keys :
 <div>
 <table border="1" cellspacing="0" cellpadding="4" style="font-size:12px; border-radius:5px; border-color:#ccc; width:100%;">
 <tr><th>Command</th><th>Key</th><th>MIDI msg.</th></tr>
-<tr><td>Pause/Play</td><td>Down</td><td>Note ON <input id="midi_pause" value="" style="width:30px;"/></td></tr>
-<tr><td>Rewind <input id="rewindv" value="3" style="width:40px" onchange="rewindvchange()"/>[sec]</td><td>Left</td><td>Note ON <input id="midi_rewind" value="" style="width:30px;"/></td></tr>
-<tr><td>Forward <input id="forwardv" value="3" style="width:40px"  onchange="forwardvchange()"/>[sec]</td><td>Right</td><td>Note ON <input id="midi_forward" value="" style="width:30px;"/></td></tr>
+<tr><td>Rewind <input id="rewindv" value="3" style="width:40px" onchange="rewindvchange()"/>[sec]</td><td>Left</td><td>Note ON <input id="midi_rewind" value="" style="width:30px;"/><span class="mrec" op="rewind">R</span></td></tr>
+<tr><td>Pause/Play</td><td>Down</td><td>Note ON <input id="midi_pause" value="" style="width:30px;"/><span class="mrec" op="pause">R</span></td></tr>
+<tr><td>Forward <input id="forwardv" value="3" style="width:40px"  onchange="forwardvchange()"/>[sec]</td><td>Right</td><td>Note ON <input id="midi_forward" value="" style="width:30px;"/><span class="mrec" op="forward">R</span></td></tr>
 </table>
 </div>
 </div>
