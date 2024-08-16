@@ -76,8 +76,9 @@ function init() {
 		max: 1,
 		step: 0.01,
 		value: 1,
-		slide: function(evt,ui){ if (gainNode){ gainNode.gain.value = ui.value; } }
-		});
+		slide: function(evt,ui){ if (gainNode){ gainNode.gain.value = ui.value; } },
+		stop: function(evt, ui){ document.activeElement.blur(); } // We intentionally blur the focus as slider changes with keyboard arrow which is intended for position slider control
+	});
 
 	$('#slider-position').slider({
 		range: "min",
@@ -87,7 +88,10 @@ function init() {
 		value: 0,
 		change: function(evt,ui){ /*console.log("change");*/ /*moveto(ui.value); */ },
 		start: function(evt,ui){ /*console.log("start");*/ pos_slider_dragging = true; },
-		stop: function(evt,ui){ /*console.log("stop");*/ moveto(ui.value); pos_slider_dragging = false; } // This is more suitable for manual changing of the slider
+		stop: function(evt,ui){
+			/*console.log("stop");*/ moveto(ui.value); pos_slider_dragging = false; 
+			document.activeElement.blur(); // We intentionally blur the focus as positioning with keyboard arrow does not work correctly if slider tick is gaining focus
+		} // This is more suitable for manual changing of the slider
 		});
 	
 	setmidikey();
@@ -199,10 +203,13 @@ function onkeydown(evt)
 	console.log("key = " + evt.keyCode);
 	if(evt.keyCode == 37 ){ // Left
 		rewind();
+		evt.preventDefault();
 	}else if(evt.keyCode == 39){ // Right
 		forward();
+		evt.preventDefault();
 	}else if(evt.keyCode == 40){ // Down 
 		pause();
+		evt.preventDefault();
 	}
 }
 
