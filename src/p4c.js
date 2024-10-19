@@ -34,11 +34,13 @@ var forwardv = 3;
 
 function midi_fromhex(key)
 {
-	var A0 = 0x3C - 12*3 - 3;
-	var offset = key - A0; // offset from A0
-	var octave = Math.floor(offset / 12.0);
-	var oto = offset % 12;
-	var ol = ["A","A#","B","C","C#","D","D#","E","F","F#","G","G#"];
+	//var A0 = 0x3C - 12*3 - 3;
+	//var Cminus2 = 0;
+	//var offset = key - A0; // offset from A0
+	var octave = Math.floor(key / 12.0);
+	var oto = key % 12;
+	//var ol = ["A","A#","B","C","C#","D","D#","E","F","F#","G","G#"];
+	var ol = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 	return ol[oto]+octave;
 }
 
@@ -530,7 +532,8 @@ function MidiMsgMathcher(evt)
 		forward();
 	
 	if(mrec){
-		if(evt.data[0]==0x90){
+		if(evt.data[0] >= 0x90 && evt.data[0] <= 0x9F){
+			midishortcut[mrec][0] = evt.data[0];
 			midishortcut[mrec][1] = evt.data[1];
 			setmidikey();
 		}
